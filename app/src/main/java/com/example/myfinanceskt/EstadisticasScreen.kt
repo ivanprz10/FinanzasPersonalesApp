@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.myfinanceskt.data.local.Categoria
 import com.example.myfinanceskt.data.local.GastoConCuenta
 import com.example.myfinanceskt.data.local.TipoCuenta
 import com.example.myfinanceskt.ui.comoFecha
@@ -105,13 +106,20 @@ private fun FilaGasto(gasto: GastoConCuenta) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(gasto.concepto, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "$etiquetaCuenta  ·  ${gasto.fechaEpochMillis.comoFecha()}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = gasto.emojiPersonalizado ?: gasto.categoria.emoji,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(end = 12.dp)
             )
+            Column {
+                Text(gasto.concepto, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                Text(
+                    text = "$etiquetaCuenta  ·  ${gasto.fechaEpochMillis.comoFecha()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
         Text(
             text = gasto.monto.comoMoneda(),
@@ -128,8 +136,8 @@ private fun EstadisticasPreview() {
         EstadisticasScreen(
             total = 570.0,
             gastos = listOf(
-                GastoConCuenta(1L, 120.0, "Super", System.currentTimeMillis(), "BBVA", TipoCuenta.DEBITO),
-                GastoConCuenta(2L, 450.0, "Cena", System.currentTimeMillis(), "Nu", TipoCuenta.CREDITO)
+                GastoConCuenta(1L, 120.0, "Super", Categoria.SUPER, null, System.currentTimeMillis(), "BBVA", TipoCuenta.DEBITO),
+                GastoConCuenta(2L, 450.0, "Cena", Categoria.COMIDA, null, System.currentTimeMillis(), "Nu", TipoCuenta.CREDITO)
             ),
             onBack = {}
         )

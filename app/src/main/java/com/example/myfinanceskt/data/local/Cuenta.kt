@@ -15,5 +15,10 @@ data class Cuenta(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val nombre: String,
-    val tipo: TipoCuenta
+    val tipo: TipoCuenta,
+    // Los siguientes 3 campos solo tienen sentido para TipoCuenta.CREDITO;
+    // quedan en null para Efectivo/Debito y para tarjetas que aun no los capturan.
+    val diaCorte: Int? = null,
+    val diasParaPago: Int? = null,
+    val tieneComprasAMeses: Boolean? = null
 )

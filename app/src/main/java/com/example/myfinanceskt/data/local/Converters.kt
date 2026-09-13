@@ -20,4 +20,10 @@ class Converters {
 
     @TypeConverter
     fun stringToTipoDeuda(valor: String): TipoDeuda = TipoDeuda.valueOf(valor)
+
+    @TypeConverter
+    fun categoriaToString(categoria: Categoria): String = categoria.name
+
+    @TypeConverter
+    fun stringToCategoria(valor: String): Categoria = Categoria.valueOf(valor)
 }

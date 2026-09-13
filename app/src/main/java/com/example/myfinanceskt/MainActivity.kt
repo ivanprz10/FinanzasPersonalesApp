@@ -71,6 +71,11 @@ import com.example.myfinanceskt.ui.theme.IconBlueCobalt
 import com.example.myfinanceskt.ui.theme.IconBlueNavy
 import com.example.myfinanceskt.ui.theme.IconBlueSteel
 import com.example.myfinanceskt.ui.theme.MyFinancesKTTheme
+import com.example.myfinanceskt.viewmodel.FinanzasViewModel
+import com.example.myfinanceskt.viewmodel.FinanzasViewModelFactory
+import com.example.myfinanceskt.viewmodel.OnboardingViewModel
+import com.example.myfinanceskt.viewmodel.OnboardingViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -90,7 +95,9 @@ class MainActivity : ComponentActivity() {
         // applicationContext = vive tanto como la app, asi evitamos fugas de memoria.
         val userPrefs = UserPreferencesRepository(applicationContext)
         val db = AppDatabase.getInstance(applicationContext)
-        val finanzas = FinanzasRepository(db.cuentaDao(), db.gastoDao(), db.personaDao(), db.deudaDao())
+        val finanzas = FinanzasRepository(
+            db.cuentaDao(), db.gastoDao(), db.personaDao(), db.deudaDao(), db.compraPlazosDao()
+        )
 
         setContent {
             MyFinancesKTTheme {
@@ -119,17 +126,25 @@ fun MyFinancesApp(
     userPrefs: UserPreferencesRepository,
     finanzas: FinanzasRepository
 ) {
-    val storedName by userPrefs.userName.collectAsState(initial = null)
+    val perfilCompleto by userPrefs.perfilCompleto.collectAsState(initial = null)
+    val storedName by userPrefs.userName.collectAsState(initial = "")
     val scope = rememberCoroutineScope()
 
-    when (val name = storedName) {
+    when (perfilCompleto) {
         null -> LoadingScreen()
-        "" -> OnboardingScreen(
-            onNameConfirmed = { confirmed ->
-                scope.launch { userPrefs.setUserName(confirmed) }
-            }
-        )
-        else -> AppNavigation(userName = name, finanzas = finanzas)
+        false -> {
+            val onboardingFactory = OnboardingViewModelFactory(userPrefs)
+            val onboardingVm: OnboardingViewModel = viewModel(factory = onboardingFactory)
+            
+            val finanzasFactory = FinanzasViewModelFactory(finanzas)
+            val finanzasVm: FinanzasViewModel = viewModel(factory = finanzasFactory)
+            
+            OnboardingScreen(
+                onboardingViewModel = onboardingVm,
+                finanzasViewModel = finanzasVm
+            )
+        }
+        true -> AppNavigation(userName = storedName, finanzas = finanzas)
     }
 }
 
@@ -192,8 +207,19 @@ fun AppNavigation(userName: String, finanzas: FinanzasRepository) {
             )
             Pantalla.COMPRA -> RegistrarCompraScreen(
                 cuentas = cuentas,
-                onGuardar = { monto, concepto, cuentaId ->
-                    scope.launch { finanzas.registrarGasto(monto, concepto, cuentaId) }
+                onGuardar = { monto, concepto, cuentaId, numeroMeses, categoria, emojiPersonalizado, esMsi, costoFinanciamiento ->
+                    scope.launch { 
+                        finanzas.registrarCompra(
+                            monto = monto, 
+                            concepto = concepto, 
+                            cuentaId = cuentaId, 
+                            numeroMeses = numeroMeses, 
+                            categoria = categoria, 
+                            emojiPersonalizado = emojiPersonalizado,
+                            isMsi = esMsi,
+                            costoFinanciamiento = costoFinanciamiento ?: 0.0
+                        ) 
+                    }
                     actual = Pantalla.HOME
                 },
                 onBack = { actual = Pantalla.HOME }

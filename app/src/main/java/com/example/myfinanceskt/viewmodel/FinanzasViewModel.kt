@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.myfinanceskt.data.FinanzasRepository
+import com.example.myfinanceskt.data.local.Categoria
+import com.example.myfinanceskt.data.local.CompraPlazosConCuenta
 import com.example.myfinanceskt.data.local.Cuenta
 import com.example.myfinanceskt.data.local.DeudaConPersona
 import com.example.myfinanceskt.data.local.GastoConCuenta
@@ -58,12 +60,68 @@ class FinanzasViewModel(private val repository: FinanzasRepository) : ViewModel(
         combine(totalTeDeben, totalDebo) { teDeben, debo -> teDeben - debo }
             .stateIn(viewModelScope, comparteEstado, 0.0)
 
-    fun agregarCuenta(nombre: String, tipo: TipoCuenta) {
-        viewModelScope.launch { repository.agregarCuenta(nombre, tipo) }
+    val comprasPlazosActivas: StateFlow<List<CompraPlazosConCuenta>> =
+        repository.comprasPlazosActivas.stateIn(viewModelScope, comparteEstado, emptyList())
+
+    val cuotaMensualTotalPlazos: StateFlow<Double> =
+        repository.cuotaMensualTotalPlazos.stateIn(viewModelScope, comparteEstado, 0.0)
+
+    fun agregarCuenta(
+        nombre: String,
+        tipo: TipoCuenta,
+        diaCorte: Int? = null,
+        diasParaPago: Int? = null,
+        tieneComprasAMeses: Boolean? = null
+    ) {
+        viewModelScope.launch {
+            repository.agregarCuenta(nombre, tipo, diaCorte, diasParaPago, tieneComprasAMeses)
+        }
     }
 
-    fun registrarGasto(monto: Double, concepto: String, cuentaId: Long) {
-        viewModelScope.launch { repository.registrarGasto(monto, concepto, cuentaId) }
+    fun registrarGasto(
+        monto: Double,
+        concepto: String,
+        cuentaId: Long,
+        categoria: Categoria = Categoria.OTRO,
+        emojiPersonalizado: String? = null
+    ) {
+        viewModelScope.launch {
+            repository.registrarGasto(monto, concepto, cuentaId, categoria, emojiPersonalizado)
+        }
+    }
+
+    /**
+     * Usar esta desde "Realice una compra": una sola llamada sin importar si
+     * el usuario eligio "a meses" (numeroMeses > 1) o "una sola exhibicion"
+     * (numeroMeses null o 1). Ver FinanzasRepository.registrarCompra.
+     *
+     * "categoria" es la seleccion generica (Comida, Transporte, Gasolina...);
+     * si no se elige ninguna, queda Categoria.OTRO. "emojiPersonalizado" es el
+     * emoji que el usuario escriba a mano (teclado del celular) cuando ninguna
+     * categoria le sirve; si se manda, la UI deberia mostrar ese en vez del
+     * emoji fijo de la categoria.
+     *
+     * "monto" es siempre el monto ORIGINAL (de contado). Si la compra es a
+     * plazos y NO es MSI, manda "isMsi = false" y "costoFinanciamiento" con
+     * el recargo — la cuota real se calcula sobre (monto + costoFinanciamiento).
+     * Si es MSI (default), no hace falta tocar esos dos parametros.
+     */
+    fun registrarCompra(
+        monto: Double,
+        concepto: String,
+        cuentaId: Long,
+        numeroMeses: Int? = null,
+        categoria: Categoria = Categoria.OTRO,
+        emojiPersonalizado: String? = null,
+        isMsi: Boolean = true,
+        costoFinanciamiento: Double = 0.0
+    ) {
+        viewModelScope.launch {
+            repository.registrarCompra(
+                monto, concepto, cuentaId, numeroMeses, categoria, emojiPersonalizado,
+                isMsi, costoFinanciamiento
+            )
+        }
     }
 
     fun registrarDeuda(persona: String, monto: Double, concepto: String, tipo: TipoDeuda) {
@@ -72,6 +130,28 @@ class FinanzasViewModel(private val repository: FinanzasRepository) : ViewModel(
 
     fun marcarDeudaSaldada(deudaId: Long) {
         viewModelScope.launch { repository.marcarDeudaSaldada(deudaId) }
+    }
+
+    fun registrarCompraPlazos(
+        cuentaId: Long,
+        concepto: String,
+        montoOriginal: Double,
+        numeroMeses: Int,
+        categoria: Categoria = Categoria.OTRO,
+        emojiPersonalizado: String? = null,
+        isMsi: Boolean = true,
+        costoFinanciamiento: Double = 0.0
+    ) {
+        viewModelScope.launch {
+            repository.registrarCompraPlazos(
+                cuentaId, concepto, montoOriginal, numeroMeses, categoria, emojiPersonalizado,
+                isMsi, costoFinanciamiento
+            )
+        }
+    }
+
+    fun marcarMesPagadoPlazos(compraId: Long) {
+        viewModelScope.launch { repository.marcarMesPagadoPlazos(compraId) }
     }
 }
 

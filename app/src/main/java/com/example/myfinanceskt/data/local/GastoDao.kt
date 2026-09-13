@@ -14,6 +14,8 @@ data class GastoConCuenta(
     val id: Long,
     val monto: Double,
     val concepto: String,
+    val categoria: Categoria,
+    val emojiPersonalizado: String?,
     val fechaEpochMillis: Long,
     val cuentaNombre: String,
     val cuentaTipo: TipoCuenta
@@ -33,6 +35,8 @@ interface GastoDao {
         SELECT g.id AS id,
                g.monto AS monto,
                g.concepto AS concepto,
+               g.categoria AS categoria,
+               g.emojiPersonalizado AS emojiPersonalizado,
                g.fechaEpochMillis AS fechaEpochMillis,
                c.nombre AS cuentaNombre,
                c.tipo AS cuentaTipo

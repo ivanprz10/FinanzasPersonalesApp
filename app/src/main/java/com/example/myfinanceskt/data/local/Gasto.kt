@@ -29,6 +29,10 @@ data class Gasto(
     val id: Long = 0,
     val monto: Double,
     val concepto: String,
+    val categoria: Categoria = Categoria.OTRO,
+    // Si el usuario elige su propio emoji (teclado del celular) en vez de una
+    // categoria predefinida, se guarda aqui y manda sobre categoria.emoji al mostrarlo.
+    val emojiPersonalizado: String? = null,
     val fechaEpochMillis: Long = System.currentTimeMillis(),
     val cuentaId: Long
 )

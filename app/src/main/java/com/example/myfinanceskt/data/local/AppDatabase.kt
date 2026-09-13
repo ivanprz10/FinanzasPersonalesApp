@@ -14,8 +14,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * cuando empecemos a versionar migraciones).
  */
 @Database(
-    entities = [Cuenta::class, Gasto::class, Persona::class, Deuda::class],
-    version = 2,
+    entities = [Cuenta::class, Gasto::class, Persona::class, Deuda::class, CompraPlazos::class],
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -25,6 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gastoDao(): GastoDao
     abstract fun personaDao(): PersonaDao
     abstract fun deudaDao(): DeudaDao
+    abstract fun compraPlazosDao(): CompraPlazosDao
 
     companion object {
         // @Volatile -> los cambios a INSTANCE son visibles de inmediato para todos los hilos.
