@@ -1,6 +1,7 @@
 package com.example.myfinanceskt.data
 
 import com.example.myfinanceskt.data.local.CompraPlazos
+import com.example.myfinanceskt.data.local.CompraPlazosConCuenta
 import java.util.Calendar
 
 /**
@@ -30,6 +31,26 @@ fun CompraPlazos.tieneRecargo(): Boolean = !isMsi && costoFinanciamiento > 0.0
  * se paga una cuota por cada corte desde fechaInicio (sin adelantos ni atrasos).
  */
 fun CompraPlazos.fechaLiberacionProgramada(): Long =
+    Calendar.getInstance().apply {
+        timeInMillis = fechaInicio
+        add(Calendar.MONTH, numeroMeses)
+    }.timeInMillis
+
+/**
+ * Mismas formulas de arriba, pero para CompraPlazosConCuenta (la proyeccion
+ * del DAO con el nombre de la tarjeta ya incluido) — es lo que la UI recibe
+ * en las pantallas (ej. la lista de "Compras a plazos activas"), no la
+ * entidad CompraPlazos directamente.
+ */
+fun CompraPlazosConCuenta.cuotaMensual(): Double = montoTotal / numeroMeses
+
+fun CompraPlazosConCuenta.mesesRestantes(): Int = (numeroMeses - mesesPagados).coerceAtLeast(0)
+
+fun CompraPlazosConCuenta.saldoPendiente(): Double = cuotaMensual() * mesesRestantes()
+
+fun CompraPlazosConCuenta.tieneRecargo(): Boolean = !isMsi && costoFinanciamiento > 0.0
+
+fun CompraPlazosConCuenta.fechaLiberacionProgramada(): Long =
     Calendar.getInstance().apply {
         timeInMillis = fechaInicio
         add(Calendar.MONTH, numeroMeses)

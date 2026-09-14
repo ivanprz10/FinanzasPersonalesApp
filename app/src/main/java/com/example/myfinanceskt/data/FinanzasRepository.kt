@@ -12,6 +12,9 @@ import com.example.myfinanceskt.data.local.DeudaDao
 import com.example.myfinanceskt.data.local.Gasto
 import com.example.myfinanceskt.data.local.GastoConCuenta
 import com.example.myfinanceskt.data.local.GastoDao
+import com.example.myfinanceskt.data.local.GastoPorCategoria
+import com.example.myfinanceskt.data.local.GastoPorCuenta
+import com.example.myfinanceskt.data.local.GastoPorMes
 import com.example.myfinanceskt.data.local.Persona
 import com.example.myfinanceskt.data.local.PersonaDao
 import com.example.myfinanceskt.data.local.TipoCuenta
@@ -33,6 +36,10 @@ class FinanzasRepository(
     val cuentas: Flow<List<Cuenta>> = cuentaDao.observarTodas()
     val gastos: Flow<List<GastoConCuenta>> = gastoDao.observarGastosConCuenta()
     val totalGastado: Flow<Double> = gastoDao.observarTotal()
+    val gastoDelMesActual: Flow<Double> = gastoDao.observarGastoMesActual()
+    val gastoPorCategoria: Flow<List<GastoPorCategoria>> = gastoDao.observarGastoPorCategoria()
+    val gastoPorCuenta: Flow<List<GastoPorCuenta>> = gastoDao.observarGastoPorCuenta()
+    val gastoPorMes: Flow<List<GastoPorMes>> = gastoDao.observarGastoPorMes()
 
     val deudasActivas: Flow<List<DeudaConPersona>> = deudaDao.observarActivasConPersona()
     val totalTeDeben: Flow<Double> = deudaDao.observarTotalTeDeben()

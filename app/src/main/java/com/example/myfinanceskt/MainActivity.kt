@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import com.example.myfinanceskt.data.FinanzasRepository
 import com.example.myfinanceskt.data.UserPreferencesRepository
 import com.example.myfinanceskt.data.local.AppDatabase
+import com.example.myfinanceskt.data.calcularDisponibleMensual
 import com.example.myfinanceskt.ui.theme.HomeBackground
 import com.example.myfinanceskt.ui.theme.IconBlueCobalt
 import com.example.myfinanceskt.ui.theme.IconBlueNavy
@@ -111,7 +112,7 @@ class MainActivity : ComponentActivity() {
  * Catalogo de pantallas. Un "enum class" de Kotlin es igual que el de Java.
  * Mas adelante esto se puede migrar a Navigation-Compose; por ahora basta un enum.
  */
-enum class Pantalla { SPLASH, HOME, ESTADISTICAS, GRUPOS, COMPRA }
+enum class Pantalla { SPLASH, HOME, ESTADISTICAS, GRUPOS, COMPRA, COMPRAS_PLAZOS }
 
 /**
  * Decide que mostrar segun si ya hay un nombre guardado.
@@ -144,7 +145,7 @@ fun MyFinancesApp(
                 finanzasViewModel = finanzasVm
             )
         }
-        true -> AppNavigation(userName = storedName, finanzas = finanzas)
+        true -> AppNavigation(userName = storedName, userPrefs = userPrefs, finanzas = finanzas)
     }
 }
 
@@ -155,7 +156,7 @@ fun MyFinancesApp(
  *   - rememberSaveable -> lo conserva si giras la pantalla o el proceso muere.
  */
 @Composable
-fun AppNavigation(userName: String, finanzas: FinanzasRepository) {
+fun AppNavigation(userName: String, userPrefs: UserPreferencesRepository, finanzas: FinanzasRepository) {
     var actual by rememberSaveable { mutableStateOf(Pantalla.SPLASH) }
     val scope = rememberCoroutineScope()
 
@@ -163,9 +164,27 @@ fun AppNavigation(userName: String, finanzas: FinanzasRepository) {
     val cuentas by finanzas.cuentas.collectAsState(initial = emptyList())
     val gastos by finanzas.gastos.collectAsState(initial = emptyList())
     val total by finanzas.totalGastado.collectAsState(initial = 0.0)
+    val gastoDelMesActual by finanzas.gastoDelMesActual.collectAsState(initial = 0.0)
+    val gastoPorCategoria by finanzas.gastoPorCategoria.collectAsState(initial = emptyList())
+    val gastoPorCuenta by finanzas.gastoPorCuenta.collectAsState(initial = emptyList())
+    val gastoPorMes by finanzas.gastoPorMes.collectAsState(initial = emptyList())
     val deudas by finanzas.deudasActivas.collectAsState(initial = emptyList())
     val totalTeDeben by finanzas.totalTeDeben.collectAsState(initial = 0.0)
     val totalDebo by finanzas.totalDebo.collectAsState(initial = 0.0)
+    val comprasPlazosActivas by finanzas.comprasPlazosActivas.collectAsState(initial = emptyList())
+
+    val trabaja by userPrefs.trabaja.collectAsState(initial = false)
+    val gananciaNeta by userPrefs.gananciaNeta.collectAsState(initial = 0.0)
+    val frecuenciaPago by userPrefs.frecuenciaPago.collectAsState(initial = null)
+    val cuotaMensualTotalPlazos by finanzas.cuotaMensualTotalPlazos.collectAsState(initial = 0.0)
+
+    val disponibleMensual = calcularDisponibleMensual(
+        trabaja = trabaja,
+        gananciaNeta = gananciaNeta,
+        frecuenciaPago = frecuenciaPago,
+        cuotaMensualTotalPlazos = cuotaMensualTotalPlazos,
+        gastoDelMesActual = gastoDelMesActual
+    )
 
     // Boton "atras" del sistema: si no estamos en HOME, vuelve a HOME.
     BackHandler(enabled = actual != Pantalla.HOME) { actual = Pantalla.HOME }
@@ -190,8 +209,23 @@ fun AppNavigation(userName: String, finanzas: FinanzasRepository) {
             )
             Pantalla.ESTADISTICAS -> EstadisticasScreen(
                 total = total,
+                gastoDelMesActual = gastoDelMesActual,
+                disponibleMensual = disponibleMensual,
+                trabaja = trabaja,
+                gastoPorCategoria = gastoPorCategoria,
+                gastoPorCuenta = gastoPorCuenta,
+                gastoPorMes = gastoPorMes,
                 gastos = gastos,
+                onVerComprasPlazos = { actual = Pantalla.COMPRAS_PLAZOS },
                 onBack = { actual = Pantalla.HOME }
+            )
+            Pantalla.COMPRAS_PLAZOS -> ComprasPlazosScreen(
+                cuotaTotal = cuotaMensualTotalPlazos,
+                compras = comprasPlazosActivas,
+                onPagarCuota = { compraId ->
+                    scope.launch { finanzas.marcarMesPagadoPlazos(compraId) }
+                },
+                onBack = { actual = Pantalla.ESTADISTICAS }
             )
             Pantalla.GRUPOS -> GruposScreen(
                 totalTeDeben = totalTeDeben,

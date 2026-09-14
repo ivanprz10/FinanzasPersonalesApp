@@ -9,6 +9,9 @@ import com.example.myfinanceskt.data.local.CompraPlazosConCuenta
 import com.example.myfinanceskt.data.local.Cuenta
 import com.example.myfinanceskt.data.local.DeudaConPersona
 import com.example.myfinanceskt.data.local.GastoConCuenta
+import com.example.myfinanceskt.data.local.GastoPorCategoria
+import com.example.myfinanceskt.data.local.GastoPorCuenta
+import com.example.myfinanceskt.data.local.GastoPorMes
 import com.example.myfinanceskt.data.local.TipoCuenta
 import com.example.myfinanceskt.data.local.TipoDeuda
 import kotlinx.coroutines.flow.SharingStarted
@@ -41,6 +44,18 @@ class FinanzasViewModel(private val repository: FinanzasRepository) : ViewModel(
 
     val totalGastado: StateFlow<Double> =
         repository.totalGastado.stateIn(viewModelScope, comparteEstado, 0.0)
+
+    val gastoDelMesActual: StateFlow<Double> =
+        repository.gastoDelMesActual.stateIn(viewModelScope, comparteEstado, 0.0)
+
+    val gastoPorCategoria: StateFlow<List<GastoPorCategoria>> =
+        repository.gastoPorCategoria.stateIn(viewModelScope, comparteEstado, emptyList())
+
+    val gastoPorCuenta: StateFlow<List<GastoPorCuenta>> =
+        repository.gastoPorCuenta.stateIn(viewModelScope, comparteEstado, emptyList())
+
+    val gastoPorMes: StateFlow<List<GastoPorMes>> =
+        repository.gastoPorMes.stateIn(viewModelScope, comparteEstado, emptyList())
 
     val deudasActivas: StateFlow<List<DeudaConPersona>> =
         repository.deudasActivas.stateIn(viewModelScope, comparteEstado, emptyList())
